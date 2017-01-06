@@ -944,14 +944,13 @@ long xuname2uid(const char *name) FAST_FUNC;
 long xgroup2gid(const char *name) FAST_FUNC;
 /* wrapper: allows string to contain numeric uid or gid */
 unsigned long get_ug_id(const char *s, long FAST_FUNC (*xname2id)(const char *)) FAST_FUNC;
-/* from chpst. Does not die, returns 0 on failure */
 struct bb_uidgid_t {
 	uid_t uid;
 	gid_t gid;
 };
-/* always sets uid and gid */
-int get_uidgid(struct bb_uidgid_t*, const char*, int numeric_ok) FAST_FUNC;
-/* always sets uid and gid, allows numeric; exits on failure */
+/* always sets uid and gid; returns 0 on failure */
+int get_uidgid(struct bb_uidgid_t*, const char*) FAST_FUNC;
+/* always sets uid and gid; exits on failure */
 void xget_uidgid(struct bb_uidgid_t*, const char*) FAST_FUNC;
 /* chown-like handling of "user[:[group]" */
 void parse_chown_usergroup_or_die(struct bb_uidgid_t *u, char *user_group) FAST_FUNC;
@@ -1360,11 +1359,6 @@ extern void selinux_preserve_fcontext(int fdesc) FAST_FUNC;
 extern void selinux_or_die(void) FAST_FUNC;
 
 
-/* systemd support */
-#define SD_LISTEN_FDS_START 3
-int sd_listen_fds(void);
-
-
 /* setup_environment:
  * if chdir pw->pw_dir: ok: else if to_tmp == 1: goto /tmp else: goto / or die
  * if clear_env = 1: cd(pw->pw_dir), clear environment, then set
@@ -1431,6 +1425,7 @@ extern void print_login_prompt(void) FAST_FUNC;
 char *xmalloc_ttyname(int fd) FAST_FUNC RETURNS_MALLOC;
 /* NB: typically you want to pass fd 0, not 1. Think 'applet | grep something' */
 int get_terminal_width_height(int fd, unsigned *width, unsigned *height) FAST_FUNC;
+int get_terminal_width(int fd) FAST_FUNC;
 
 int tcsetattr_stdin_TCSANOW(const struct termios *tp) FAST_FUNC;
 
@@ -1957,6 +1952,7 @@ extern const char bb_default_login_shell[] ALIGN1;
 
 
 #define ARRAY_SIZE(x) ((unsigned)(sizeof(x) / sizeof((x)[0])))
+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 
 
 /* We redefine ctype macros. Unicode-correct handling of char types

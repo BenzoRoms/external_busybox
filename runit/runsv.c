@@ -26,7 +26,17 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /* Busyboxed by Denys Vlasenko <vda.linux@googlemail.com> */
-/* TODO: depends on runit_lib.c - review and reduce/eliminate */
+
+//config:config RUNSV
+//config:	bool "runsv"
+//config:	default y
+//config:	help
+//config:	  runsv starts and monitors a service and optionally an appendant log
+//config:	  service.
+
+//applet:IF_RUNSV(APPLET(runsv, BB_DIR_USR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_RUNSV) += runsv.o
 
 //usage:#define runsv_trivial_usage
 //usage:       "DIR"
@@ -49,16 +59,11 @@ static void gettimeofday_ns(struct timespec *ts)
 #else
 static void gettimeofday_ns(struct timespec *ts)
 {
-	if (sizeof(struct timeval) == sizeof(struct timespec)
-	 && sizeof(((struct timeval*)ts)->tv_usec) == sizeof(ts->tv_nsec)
-	) {
-		/* Cheat */
-		gettimeofday((void*)ts, NULL);
-		ts->tv_nsec *= 1000;
-	} else {
-		extern void BUG_need_to_implement_gettimeofday_ns(void);
-		BUG_need_to_implement_gettimeofday_ns();
-	}
+	BUILD_BUG_ON(sizeof(struct timeval) != sizeof(struct timespec));
+	BUILD_BUG_ON(sizeof(((struct timeval*)ts)->tv_usec) != sizeof(ts->tv_nsec));
+	/* Cheat */
+	gettimeofday((void*)ts, NULL);
+	ts->tv_nsec *= 1000;
 }
 #endif
 
